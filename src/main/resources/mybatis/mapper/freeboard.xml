@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- freeBoardMapper.xml -->
+ 	<!-- namespace 는 해당 인터페이스 완전한 이름을 사용 -->
+ 	
+  <mapper namespace="com.study.free.dao.IFreeBoardDao">
+ 
+  <!-- 반복적인  구문 재사용 -->
+  <sql id="whereSearchClause">
+  	<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and 
+		     	@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
+		     		<choose>
+		     			<when test='searchType == "T"'>
+		     				AND bo_title LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType == "W"'>
+		     				AND bo_writer LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType.equals("C")'>
+		     				AND bo_content LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     		
+		     		</choose>
+		     	</if>
+		     	
+		     	<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchCategory)">
+		     		AND bo_category= #{searchCategory}
+		     	</if>
+  </sql>
+  		<select id="getBoardCount" parameterType="com.study.free.vo.FreeSearchVO" resultType="int">
+	  		 select count(*) 
+		     from	free_board	
+		     where bo_del_yn='N'	
+		     <include refid="whereSearchClause" />
+		    
+  		</select>
+  		<select id="getBoardList" parameterType="com.study.free.vo.FreeSearchVO" resultType="com.study.free.vo.FreeBoardVO">
+			  <include refid="common.PRE_PAGING_ORY" />
+			  select  a.bo_num
+			  			, b.comm_nm as boCateName
+			  			, a.bo_title
+			  			, a.bo_writer
+			  			, to_char(a.bo_reg_date,'YYYY-MM-DD')as bo_reg_date
+			  			, a.bo_hit
+								from free_board a left join comm_code b
+														on (a.bo_category=b.comm_cd)		
+								where bo_del_yn='N'		
+								<include refid="whereSearchClause" />
+								order by a.bo_num desc			
+								<include refid="common.POST_PAGING_ORY" />
+  		</select>
+  		
+  		<select id="getBoard" parameterType="int" resultType="com.study.free.vo.FreeBoardVO">
+		  		select a.bo_num
+		  					,a.bo_title
+		  					,a.bo_writer
+		  					,b.comm_cd as boCategory
+		  					,b.comm_nm as boCateName
+		  					,a.bo_ip
+		  					,a.bo_hit
+		  					,a.bo_content
+		  					,to_char(a.bo_reg_date,'YYYY.MM.DD HH24:MI') as bo_reg_date
+		  					,to_char(a.bo_mod_date,'YYYY.MM.DD HH24:MI') as bo_mod_date
+					from free_board a left join comm_code b
+					   						on a.bo_category=b.comm_cd
+					where bo_del_yn='N'
+					   		and bo_num= #{bonum}
+					order by a.bo_num
+  		
+  		</select>
+  		
+  		<insert id="insertBoard" parameterType="com.study.free.vo.FreeBoardVO">
+
+					<selectKey keyProperty="boNum" resultType="int" order="BEFORE">
+					 	SELECT SEQ_FREE_BOARD.nextval
+					 	FROM dual
+					</selectKey>
+		 	INSERT INTO free_board (			
+					      bo_num       , bo_title    , bo_category 
+					    , bo_writer    , bo_pass     , bo_content  
+					    , bo_ip        , bo_hit      , bo_reg_date 
+					    , bo_del_yn
+					) VALUES (
+					     #{boNum} ,#{boTitle} ,#{boCategory}
+					    ,#{boWriter},#{boPass},#{boContent}										
+					    ,#{boIp},0, sysdate
+					    ,'N'	
+					)
+  		</insert>
+  		
+  		<update id="updateBoard" parameterType="com.study.free.vo.FreeBoardVO">
+					  UPDATE free_board	
+						SET							
+						     bo_title = #{boTitle}	
+						    ,bo_category = #{boCategory} 
+						     ,bo_writer = #{boWriter}	
+						     ,bo_content =#{boContent}
+						     ,bo_ip = #{boIp}			
+						     ,bo_mod_date = sysdate	
+						WHERE bo_num=#{boNum} and bo_pass= #{boPass}
+  		</update>
+  		
+			<update id="deleteBoard" parameterType="com.study.free.vo.FreeBoardVO">
+			
+						UPDATE free_board	
+						SET bo_del_yn='Y'	
+						WHERE bo_num=#{boNum} and bo_pass=#{boPass}
+			
+			</update>
+			
+			<update id="increaseHit" parameterType="int">
+						UPDATE free_board	
+						SET bo_hit=bo_hit+1		
+						WHERE bo_num=#{boNum}	
+			</update>
+			
+			<!-- //프리미티브형으로 된 배열 array -->
+			<update id="deleteCheckBoard">
+				UPDATE free_board
+					 SET bo_del_yn='Y'
+				 <where>
+				 	<if test="array == null">
+				 		1=0
+				 	</if>
+				 	<if test="array != null">
+				 		<foreach collection="array" item="num" open="bo_num in (" close=")" separator=",">
+				 			#{num}
+				 		</foreach>
+				 	</if>
+				 </where>
+			</update>
+  </mapper>

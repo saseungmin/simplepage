@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- member.xml -->
+ 	<!-- namespace 는 해당 인터페이스 완전한 이름을 사용 -->
+
+
+
+  <mapper namespace="com.study.member.dao.IMemberDao">
+  
+ 
+    <sql id="whereSearchClause">
+  		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and 
+		     	@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
+		     		<choose>
+		     			<when test='searchType == "I"'>
+		     				AND mem_id LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType == "N"'>
+		     				AND mem_name LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType.equals("A")'>
+		     				AND mem_add1||mem_add2 LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     		</choose>
+		     	</if>
+		     	
+		     	<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchJob)">
+		     		AND mem_job= #{searchJob}
+		     	</if>
+  	</sql>
+  
+		<select id="getMemberCount" parameterType="com.study.member.vo.MemberSearchVO" resultType="int">
+				select count(*) 		
+			  from member 
+			  where mem_del_yn='N'
+			 	<include refid="whereSearchClause" />
+		</select>
+		
+		<select id="getMemberList" parameterType="com.study.member.vo.MemberSearchVO" resultType="com.study.member.vo.MemberVO">
+			<include refid="common.PRE_PAGING_ORY" />
+					select a.mem_id    
+									,a.mem_name    
+									,a.mem_add1
+									,a.mem_add2
+									,b.comm_nm as mem_like_nm       
+									,c.comm_nm as mem_job_nm       
+									,a.mem_mileage 
+					 from member a,       
+								(select *       
+								from member a, comm_code b     
+					 			where a.mem_like=b.comm_cd) b,        
+								(select*       
+								from member a, comm_code b        
+								where a.mem_job=b.comm_cd) c  
+					 where a.mem_id=b.mem_id 
+					 	 and b.mem_id=c.mem_id 
+					 	 and a.mem_del_yn='N'
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and 
+		     	@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
+		     		<choose>
+		     			<when test='searchType == "I"'>
+		     				AND a.mem_id LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType == "N"'>
+		     				AND a.mem_name LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     			<when test='searchType.equals("A")'>
+		     				AND a.mem_add1||a.mem_add2 LIKE '%'|| #{searchWord} || '%'
+		     			</when>
+		     		</choose>
+		     	</if>
+		     	
+		     	<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchJob)">
+		     		AND c.comm_nm= #{searchJob}
+		     	</if>
+					 order by a.mem_id
+						<include refid="common.POST_PAGING_ORY" />
+		</select>
+		
+		<select id="getMemberVO" parameterType="string" resultType="com.study.member.vo.MemberVO">
+		
+		    SELECT 	mem_id,
+						    mem_pass,
+						    mem_name,
+						    mem_regno1,
+						    mem_regno2,
+						    to_char(mem_bir,'YYYY-MM-DD')as mem_bir,
+						    mem_zip,
+						    mem_add1,
+						    mem_add2,
+						    mem_hp,
+						    mem_mail,
+						    mem_job,
+				(select comm_nm from comm_code where comm_cd=mem_job)as mem_job_nm,
+					    	mem_like,
+		    (select comm_nm from comm_code where comm_cd=mem_like)as mem_like_nm,
+						    mem_mileage,
+						    mem_del_yn
+				FROM member
+				where mem_id= #{memId}
+				and mem_del_yn='N'
+				
+		</select>
+		
+		<insert id="insertMember" parameterType="com.study.member.vo.MemberVO">
+
+				INSERT INTO member (
+					    mem_id,             mem_pass,         mem_name,
+					    mem_regno1,    mem_regno2,    mem_bir,
+					    mem_zip,            mem_add1,       mem_add2,
+					    mem_hp,             mem_mail,        mem_job,
+					    mem_like,       mem_mileage,    mem_del_yn
+					) VALUES (
+					     #{memId},#{memPass},#{memName}
+					    ,#{memRegno1},#{memRegno2},#{memBir}
+					    ,#{memZip},#{memAdd1},#{memAdd2}
+					    ,#{memHp},#{memMail},#{memJob} 
+					  ,#{memLike},0,'N'
+					)
+					
+		</insert>
+		
+		<update id="updateMember" parameterType="com.study.member.vo.MemberVO">
+		
+					UPDATE member 
+					SET  mem_name = #{memName}
+					     ,mem_regno1 = #{memRegno1}
+					    , mem_regno2 = #{memRegno2}
+					    , mem_bir    = #{memBir}
+					    , mem_zip    = #{memZip}
+					    , mem_add1   = #{memAdd1}
+					    , mem_add2   = #{memAdd2}
+					    , mem_hp     = #{memHp}
+					    , mem_mail   = #{memMail}
+					    , mem_job    = #{memJob}
+					    , mem_like   = #{memLike}
+					 WHERE  mem_id = #{memId}
+					    AND mem_pass = #{memPass}
+							
+		</update>
+		
+		<delete id="deleteMember" parameterType="com.study.member.vo.MemberVO">
+			
+				 UPDATE member 
+				    set mem_del_yn='Y'
+				 where mem_id=#{memId}
+				     and mem_pass=#{memPass}
+		
+		
+		</delete>
+		
+  </mapper>

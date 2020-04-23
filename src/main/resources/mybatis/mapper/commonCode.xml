@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- commonCodeMapper.xml -->
+ 	<!-- namespace 는 해당 인터페이스 완전한 이름을 사용 -->
+ 	
+  <mapper namespace="com.study.common.dao.ICommonCodeDao">	
+	  <select id="getCodeListByParent" parameterType="String" resultType="com.study.common.vo.CodeVO">
+	  		select comm_cd
+				      ,comm_nm
+				from comm_code
+				where comm_parent= #{code}
+				order by comm_ord
+	  
+	  </select>
+  </mapper>

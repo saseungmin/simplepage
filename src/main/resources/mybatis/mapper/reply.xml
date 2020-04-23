@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- reply.xml -->
+ 	<!-- namespace 는 해당 인터페이스 완전한 이름을 사용 -->
+ 	
+  <mapper namespace="com.study.reply.dao.IReplyDao">
+
+  			<select id="getReplyCount" 
+ 							parameterType="com.study.reply.vo.ReplySearchVO" 
+ 							resultType="int">
+ 			 SELECT count(*) 
+				 FROM  reply
+				WHERE re_parent_no=#{reParentNo}
+					AND re_category = #{reCategory}
+ 			</select>
+
+
+
+			<select id="getReply" parameterType="com.study.reply.vo.ReplyVO" resultType="com.study.reply.vo.ReplyVO">
+			
+						SELECT re_no,
+					       re_category,
+					       re_parent_no,
+					       re_mem_id,
+					       b.mem_name as re_mem_name,
+					       re_content,
+					       re_ip,
+					       TO_CHAR(re_reg_date,'MM-DD HH24:MI') AS re_reg_date,
+					       TO_CHAR(re_mod_date,'MM-DD HH24:MI') AS re_mod_date
+					  FROM reply a,member b
+					 WHERE re_no= #{reNo}
+					   AND a.re_mem_id= b.mem_id
+					   
+			</select>
+
+
+
+
+
+
+	<select id="getReplyList" parameterType="com.study.reply.vo.ReplySearchVO" resultType="com.study.reply.vo.ReplyVO">
+	
+	 		<include refid="common.PRE_PAGING_ORY" />				
+				SELECT re_no,
+			       re_category,
+			       re_parent_no,
+			       re_mem_id,
+			       b.mem_name as re_mem_name,
+			       re_content,
+			       re_ip,
+			       TO_CHAR(re_reg_date,'MM-DD HH24:MI') AS re_reg_date,
+			       TO_CHAR(re_mod_date,'MM-DD HH24:MI') AS re_mod_date
+			  FROM reply a,member b
+			 WHERE re_parent_no= #{reParentNo}
+			   AND a.re_mem_id= b.mem_id
+			   AND re_category = #{reCategory}
+		ORDER BY re_no DESC   
+		<include refid="common.POST_PAGING_ORY" />
+	</select>
+	
+	<insert id="insertReply" parameterType="com.study.reply.vo.ReplyVO">
+	INSERT INTO reply 
+       ( re_no,      re_category,   re_parent_no,
+         re_mem_id,  re_content,    re_ip,
+         re_reg_date
+        ) VALUES 
+       ( seq_reply.nextval , #{reCategory},  #{reParentNo},
+         #{reMemId}, #{reContent}, #{reIp},
+         sysdate 
+        )
+	
+	</insert>
+	
+	<update id="updateReply" parameterType="com.study.reply.vo.ReplyVO">
+	
+		UPDATE reply
+		   SET re_content  = #{reContent} ,
+		       re_mod_date = sysdate   
+		 WHERE re_no = #{reNo}
+	
+	</update>
+	
+	
+	<delete id="deleteReply" parameterType="com.study.reply.vo.ReplyVO">
+	
+		DELETE FROM reply
+	        WHERE re_no = #{reNo}
+	        
+	</delete>
+	
+
+  	
+  </mapper>
