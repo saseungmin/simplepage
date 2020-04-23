@@ -1,6 +1,7 @@
 # simplepage
 
 1. 개인 프로젝트 simplepage 구현
+- linux mint
 - spring framework
 - jenkins
 - maven
